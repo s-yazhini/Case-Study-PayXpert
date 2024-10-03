@@ -1,0 +1,44 @@
+CREATE TABLE Employee (
+    EmployeeID INT PRIMARY KEY IDENTITY(1,1),
+    FirstName VARCHAR(50) NOT NULL,
+    LastName VARCHAR(50) NOT NULL,
+    DateOfBirth DATE NOT NULL,
+    Gender VARCHAR(10) NOT NULL,
+    Email VARCHAR(100) UNIQUE NOT NULL,
+    PhoneNumber VARCHAR(15) UNIQUE NOT NULL,
+    Address TEXT NOT NULL,
+    Position VARCHAR(50) NOT NULL,
+    JoiningDate DATE NOT NULL,
+    TerminationDate DATE
+);
+
+CREATE TABLE Payroll (
+    PayrollID INT PRIMARY KEY IDENTITY(1,1),
+    EmployeeID INT,
+    PayPeriodStartDate DATE NOT NULL,
+    PayPeriodEndDate DATE NOT NULL,
+    BasicSalary DECIMAL(10, 2) NOT NULL,
+    OvertimePay DECIMAL(10, 2) NOT NULL,
+    Deductions DECIMAL(10, 2) NOT NULL,
+    NetSalary DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (EmployeeID) REFERENCES Employee(EmployeeID) ON DELETE CASCADE
+);
+
+CREATE TABLE Tax (
+    TaxID INT PRIMARY KEY IDENTITY(1,1),
+    EmployeeID INT,
+    TaxYear INT NOT NULL,
+    TaxableIncome DECIMAL(12, 2) NOT NULL,
+    TaxAmount DECIMAL(12, 2) NOT NULL,
+    FOREIGN KEY (EmployeeID) REFERENCES Employee(EmployeeID) ON DELETE CASCADE
+);
+
+CREATE TABLE FinancialRecord (
+    RecordID INT PRIMARY KEY IDENTITY(1,1),
+    EmployeeID INT,
+    RecordDate DATE NOT NULL,
+    Description TEXT NOT NULL,
+    Amount DECIMAL(12, 2) NOT NULL,
+    RecordType VARCHAR(20) NOT NULL,
+    FOREIGN KEY (EmployeeID) REFERENCES Employee(EmployeeID) ON DELETE CASCADE
+);

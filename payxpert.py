@@ -321,3 +321,342 @@ class IFinancialRecordService(ABC):
         pass
 
 #-------------------YSEND-------------------------
+
+#--------------------LSTART------------------------
+
+#IEmployee service
+from abc import ABC, abstractmethod
+
+class IEmployeeService(ABC):
+    @abstractmethod
+    def get_employee_by_id(self, employee_id):
+        pass
+
+    @abstractmethod
+    def add_employee(self, employee):
+        pass
+
+    @abstractmethod
+    def update_employee(self, employee):
+        pass
+
+    @abstractmethod
+    def delete_employee(self, employee_id):
+        pass
+
+#from abc import ABC, abstractmethod
+
+class IEmployeeService(ABC):
+    @abstractmethod
+    def get_employee_by_id(self, employee_id):
+        pass
+
+    @abstractmethod
+    def add_employee(self, employee):
+        pass
+
+    @abstractmethod
+    def update_employee(self, employee):
+        pass
+
+    @abstractmethod
+    def delete_employee(self, employee_id):
+        pass
+#from abc import ABC, abstractmethod
+
+class IEmployeeService(ABC):
+    @abstractmethod
+    def get_employee_by_id(self, employee_id):
+        pass
+
+    @abstractmethod
+    def add_employee(self, employee):
+        pass
+
+    @abstractmethod
+    def update_employee(self, employee):
+        pass
+
+    @abstractmethod
+    def delete_employee(self, employee_id):
+        pass
+
+from .i_employee_service import IEmployeeService
+
+class EmployeeServiceImpl(IEmployeeService):
+    def __init__(self):
+        self.employees = {}  # In-memory dictionary to store employees for simplicity
+
+    def get_employee_by_id(self, employee_id):
+        if employee_id not in self.employees:
+            raise Exception("Employee not found")
+        return self.employees[employee_id]
+
+    def add_employee(self, employee):
+        if employee.employee_id in self.employees:
+            raise Exception("Employee already exists")
+        self.employees[employee.employee_id] = employee
+        print(f"Employee {employee.first_name} added successfully")
+
+    def update_employee(self, employee):
+        if employee.employee_id not in self.employees:
+            raise Exception("Employee not found")
+        self.employees[employee.employee_id] = employee
+        print(f"Employee {employee.first_name} updated successfully")
+
+    def delete_employee(self, employee_id):
+        if employee_id not in self.employees:
+            raise Exception("Employee not found")
+        del self.employees[employee_id]
+        print(f"Employee with ID {employee_id} deleted successfully")
+
+#IPayrollService
+from abc import ABC, abstractmethod
+
+class IPayrollService(ABC):
+    
+    @abstractmethod
+    def calculate_net_salary(self, employee_id):
+        """Calculate net salary for a given employee."""
+        pass
+
+    @abstractmethod
+    def add_payroll_record(self, payroll):
+        """Add a new payroll record."""
+        pass
+
+    @abstractmethod
+    def get_payroll_by_employee(self, employee_id):
+        """Get payroll record for a given employee."""
+        pass
+import sqlite3
+from entity.payroll import Payroll
+from dao.i_payroll_service import IPayrollService
+
+class PayrollServiceImpl(IPayrollService):
+    
+    def __init__(self, db_name='payroll_management.db'):
+        self.connection = sqlite3.connect(db_name)
+        self.cursor = self.connection.cursor()
+        self.create_payroll_table()
+
+    def create_payroll_table(self):
+        """Create payroll table if it doesn't exist"""
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS Payroll (
+                PayrollID INTEGER PRIMARY KEY,
+                EmployeeID INTEGER,
+                PayPeriodStartDate TEXT,
+                PayPeriodEndDate TEXT,
+                BasicSalary REAL,
+                OvertimePay REAL,
+                Deductions REAL,
+                NetSalary REAL,
+                FOREIGN KEY (EmployeeID) REFERENCES Employee(EmployeeID)
+            )
+        ''')
+        self.connection.commit()
+
+    def calculate_net_salary(self, employee_id):
+        """Calculate net salary for a given employee."""
+        self.cursor.execute('''
+            SELECT BasicSalary, OvertimePay, Deductions 
+            FROM Payroll WHERE EmployeeID = ?
+        ''', (employee_id,))
+        payroll_data = self.cursor.fetchone()
+        
+        if payroll_data:
+            basic_salary, overtime_pay, deductions = payroll_data
+            net_salary = basic_salary + overtime_pay - deductions
+            return net_salary
+        else:
+            raise Exception("Payroll record not found for the employee.")
+
+    def add_payroll_record(self, payroll: Payroll):
+        """Add a new payroll record."""
+        self.cursor.execute('''
+            INSERT INTO Payroll 
+            (PayrollID, EmployeeID, PayPeriodStartDate, PayPeriodEndDate, BasicSalary, OvertimePay, Deductions, NetSalary)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (payroll.payroll_id, payroll.employee_id, payroll.start_date, payroll.end_date, payroll.basic_salary, payroll.overtime_pay, payroll.deductions, payroll.net_salary))
+        self.connection.commit()
+
+    def get_payroll_by_employee(self, employee_id):
+        """Get payroll record for a given employee."""
+        self.cursor.execute('''
+            SELECT * FROM Payroll WHERE EmployeeID = ?
+        ''', (employee_id,))
+        payroll_record = self.cursor.fetchone()
+        
+        if payroll_record:
+            return payroll_record
+        else:
+            raise Exception("Payroll record not found for the employee.")
+
+#ITaxService
+from abc import ABC, abstractmethod
+
+class ITaxService(ABC):
+    
+    @abstractmethod
+    def calculate_tax(self, employee_id):
+        """Calculate tax for a given employee."""
+        pass
+
+    @abstractmethod
+    def add_tax_record(self, tax):
+        """Add a new tax record."""
+        pass
+
+    @abstractmethod
+    def get_tax_by_employee(self, employee_id):
+        """Get tax record for a given employee."""
+        pass
+import sqlite3
+from entity.tax import Tax
+from dao.i_tax_service import ITaxService
+
+class TaxServiceImpl(ITaxService):
+    
+    def __init__(self, db_name='payroll_management.db'):
+        self.connection = sqlite3.connect(db_name)
+        self.cursor = self.connection.cursor()
+        self.create_tax_table()
+
+    def create_tax_table(self):
+        """Create tax table if it doesn't exist"""
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS Tax (
+                TaxID INTEGER PRIMARY KEY,
+                EmployeeID INTEGER,
+                TaxYear INTEGER,
+                TaxableIncome REAL,
+                TaxAmount REAL,
+                FOREIGN KEY (EmployeeID) REFERENCES Employee(EmployeeID)
+            )
+        ''')
+        self.connection.commit()
+
+    def calculate_tax(self, employee_id):
+        """Calculate tax for a given employee based on taxable income."""
+        self.cursor.execute('''
+            SELECT TaxableIncome 
+            FROM Tax WHERE EmployeeID = ?
+        ''', (employee_id,))
+        tax_data = self.cursor.fetchone()
+        
+        if tax_data:
+            taxable_income = tax_data[0]
+            # Assuming a simple flat tax rate of 10%
+            tax_amount = taxable_income * 0.10
+            return tax_amount
+        else:
+            raise Exception("Tax record not found for the employee.")
+
+    def add_tax_record(self, tax: Tax):
+        """Add a new tax record."""
+        self.cursor.execute('''
+            INSERT INTO Tax 
+            (TaxID, EmployeeID, TaxYear, TaxableIncome, TaxAmount)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (tax.tax_id, tax.employee_id, tax.tax_year, tax.taxable_income, tax.tax_amount))
+        self.connection.commit()
+
+    def get_tax_by_employee(self, employee_id):
+        """Get tax record for a given employee."""
+        self.cursor.execute('''
+            SELECT * FROM Tax WHERE EmployeeID = ?
+        ''', (employee_id,))
+        tax_record = self.cursor.fetchone()
+        
+        if tax_record:
+            return tax_record
+        else:
+            raise Exception("Tax record not found for the employee.")
+
+#IFinancialRecordService
+from abc import ABC, abstractmethod
+
+class IFinancialRecordService(ABC):
+    
+    @abstractmethod
+    def add_financial_record(self, financial_record):
+        """Add a new financial record."""
+        pass
+
+    @abstractmethod
+    def get_financial_records_by_employee(self, employee_id):
+        """Get financial records for a given employee."""
+        pass
+
+    @abstractmethod
+    def get_total_expenses(self, employee_id):
+        """Get total expenses for a given employee."""
+        pass
+
+    @abstractmethod
+    def get_total_income(self, employee_id):
+        """Get total income for a given employee."""
+        pass
+import sqlite3
+from entity.financial_record import FinancialRecord
+from dao.i_financial_record_service import IFinancialRecordService
+
+class FinancialRecordServiceImpl(IFinancialRecordService):
+    
+    def __init__(self, db_name='payroll_management.db'):
+        self.connection = sqlite3.connect(db_name)
+        self.cursor = self.connection.cursor()
+        self.create_financial_record_table()
+
+    def create_financial_record_table(self):
+        """Create financial record table if it doesn't exist"""
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS FinancialRecord (
+                RecordID INTEGER PRIMARY KEY,
+                EmployeeID INTEGER,
+                RecordDate TEXT,
+                Description TEXT,
+                Amount REAL,
+                RecordType TEXT,
+                FOREIGN KEY (EmployeeID) REFERENCES Employee(EmployeeID)
+            )
+        ''')
+        self.connection.commit()
+
+    def add_financial_record(self, financial_record: FinancialRecord):
+        """Add a new financial record."""
+        self.cursor.execute('''
+            INSERT INTO FinancialRecord 
+            (RecordID, EmployeeID, RecordDate, Description, Amount, RecordType)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (financial_record.record_id, financial_record.employee_id, financial_record.record_date, 
+              financial_record.description, financial_record.amount, financial_record.record_type))
+        self.connection.commit()
+
+    def get_financial_records_by_employee(self, employee_id):
+        """Get financial records for a given employee."""
+        self.cursor.execute('''
+            SELECT * FROM FinancialRecord WHERE EmployeeID = ?
+        ''', (employee_id,))
+        return self.cursor.fetchall()
+
+    def get_total_expenses(self, employee_id):
+        """Get total expenses for a given employee."""
+        self.cursor.execute('''
+            SELECT SUM(Amount) FROM FinancialRecord 
+            WHERE EmployeeID = ? AND RecordType = 'expense'
+        ''', (employee_id,))
+        total_expenses = self.cursor.fetchone()[0]
+        return total_expenses if total_expenses is not None else 0.0
+
+    def get_total_income(self, employee_id):
+        """Get total income for a given employee."""
+        self.cursor.execute('''
+            SELECT SUM(Amount) FROM FinancialRecord 
+            WHERE EmployeeID = ? AND RecordType = 'income'
+        ''', (employee_id,))
+        total_income = self.cursor.fetchone()[0]
+        return total_income if total_income is not None else 0.0
+
+---------------------LSEND-------------------
